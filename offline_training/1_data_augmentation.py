@@ -48,7 +48,10 @@ lamda = lamda.reshape((-1,1))
 
 
 
-# Level set data augmentation along the rho-axis s.t. dfdrho = 1
+# Level set data augmentation along the rho-axis
+# >> Note: Satisfying Eikonal equation does not necessarily mean that dfdrho = 1,
+#          however, we assume that the level-set gradient satisfies dfdrho = 1 for simplicity.
+#          This part will be improved in the near future. 
 delta = 1e-5
 
 levels = np.linspace(0, 2, N_level)
@@ -57,7 +60,7 @@ levels[0] = delta # avoid center of pi-plane
 tmp = 0
 for lv in levels:
 
-  # >> data augmentation
+  # >> data augmentation along the radial direction (dfdrho = 1)
   p_aug     = np.copy(p)
   rho_aug   = lv*np.copy(rho)
   theta_aug = np.copy(theta)
@@ -72,6 +75,12 @@ for lv in levels:
   for i in range(np.shape(p_aug)[0]):
     conv_mat = convert_dfdprt_to_dfd123(p_aug[i,0], rho_aug[i,0], theta_aug[i,0])
 
+    # >> Note: Enforcing dfdrho = 1 results in dfdp = 0 and dfdtheta = 0,
+    #          implying that the stress gradient is identical to J2 plasticity.
+    #          To be consistent with the trained neural network yield function (f_NN),
+    #          one may use autograd to create labels for the stress gradient instead.
+    #          For example, dfdprt[i] = autograd.element_wise_grad(f_NN, i).
+    #          This part will also be improved in the near future. 
     dfdprt = np.zeros(3)
     dfdprt[0] = 0. # dfdp
     dfdprt[1] = 1. # dfdrho
